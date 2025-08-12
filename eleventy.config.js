@@ -11,5 +11,9 @@ module.exports = function(eleventyConfig) {
   /* other asset types */
   eleventyConfig.addPassthroughCopy("assets/css/*.css");
   eleventyConfig.addPassthroughCopy("assets/vid/*.webm");
+
+  /* why? */
+  eleventyConfig.addPassthroughCopy("404.html");
+
   return {};
 };
