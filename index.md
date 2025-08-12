@@ -1,6 +1,6 @@
 ---
 layout: main.njk
-title: "Roof Rite Exteriors - sample website"
+title: "Roof Rite Exteriors"
 description: "The trusted source for all your exterior needs"
 motto: "We are who we are because of our wonderful staff and the fine people we serve. As such, we commit ourselves to the education of our employees, and to a smooth and thorough workflow for all our customers. We're told it shows, too."
 ---
