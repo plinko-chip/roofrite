@@ -3,16 +3,21 @@
 <link rel="stylesheet" href="/assets/css/main.css">
 <link href="https://fonts.googleapis.com/css?family=Oswald|Work+Sans" rel="stylesheet">
 <link rel="icon" href="favicon.ico">
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 
 <title>{{ title }}</title>
-<meta name="twitter:title" content="{{ title }}" />
-<meta property="og:title"  content="{{ title }}" />
-<meta property="og:description" content="{{ description }}" />
-<meta name="twitter:description" content="{{ description }}" />
-<meta property="og:image" content="/assets/img/preview_card.jpg" />
-<meta name="twitter:image" content="/assets/img/preview_card.jpg" />
+<meta property="twitter:title" name="twitter:title" content="{{ title }}" />
+<meta property="og:title" name="og:title" content="{{ title }}" />
+<meta property="description" name="description" content="{{ description }}">
+<meta property="og:description" name="og:description" content="{{ description }}" />
+<meta property="twitter:description" name="twitter:description" content="{{ description }}" />
+<meta property="og:image" name="og:image" content="/assets/img/preview_card.jpg" />
+<meta property="twitter:image" name="twitter:image" content="/assets/img/preview_card.jpg" />
+<meta property="og:image:width" name="og:image:width" content="1200" />
+<meta property="og:image:height" name="og:image:height" content="628" />
+<meta property="twitter:image:alt" name="twitter:image:alt" content="Roof Rite" />
 
 <link rel="canonical" href="https://roofriteexteriors.com{{ page.url | escape }}">
-<meta property="og:url" content="https://roofriteexteriors.com{{ page.url | escape }}" />
-<meta property="og:type" content="website" />
+<meta property="og:url" name="og:url" content="https://roofriteexteriors.com{{ page.url | escape }}" />
+<meta property="og:type" name="og:type" content="website" />
 <meta name="robots" content="index, follow" />
