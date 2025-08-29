@@ -71,7 +71,6 @@ strong {
   background-color: #232E5E;
   color: white;
   padding: 10px;
-  margin-left: 20px;
   border: 1px solid white;
   font-size: 13pt;
 }
@@ -178,7 +177,7 @@ video, .hero_image {
 /* hero contact form */
 .contact-form {
   width: 400px;
-  height: 400px;
+  height: 500px;
   margin-right: 25px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
