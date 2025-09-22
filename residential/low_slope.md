@@ -1,7 +1,7 @@
 ---
 layout: page.njk
 title: "Low Slope Membrane"
-hero_image: "/assets/img/IMG-0175.jpeg"
+hero_image: "/assets/img/DJI_0027.jpg"
 hero_alt: "A Roof Rite crew member in a high-visibility shirt installs a white TPO membrane on a flat commercial roof. The insulation boards beneath are marked and fastened with places and screws. Paint roller that is used to fully adhere the TPO lies in the foreground, and nearby rooftops and trees are visible in the background under a partly cloudy sky."
 ---
 
