@@ -8,6 +8,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("assets/img/*.gif");
   eleventyConfig.addPassthroughCopy("favicon.ico");
   eleventyConfig.addPassthroughCopy("assets/img/badges/*.svg");
+  eleventyConfig.addPassthroughCopy("assets/img/badges/*.png");
   
   /* other asset types */
   eleventyConfig.addPassthroughCopy("assets/css/*.css");
