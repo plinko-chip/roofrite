@@ -1,0 +1,126 @@
+{#
+  Hi there,
+  
+  My name is Zach. If you're editting the Roof Rite Website after me, this page is not a mistake. I figure that whenever we do promotions, they're going to be visually different than most of the website. I wanted to write a standalone page that we could just copy in and reference (ie. {% include "promotions.njk" %}) where ever we need it. My plan is to make whatever changes to the promotions within this document, and save this one and others like it in the repository. That way when we need to put a new promotion out, we can just chose whatever pre-written template looks the closest to what we want, and adjust accordingly.
+
+  Hope that makes sense. I have no idea what I'm doing.
+
+  Thanks,
+
+  Zach  
+#}
+
+<section class="promotion-section">
+  <style>
+    /* === Layout & Background === */
+    .promotion-section {
+      position: relative;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      min-height: 60vh;
+      overflow: hidden;
+      background: url("/assets/img/Aspen.jpg") center center / cover no-repeat;
+      background-color: #111;
+      color: #fff;
+    }
+
+    /* Dark overlay for text readability */
+    .promotion-overlay {
+      box-sizing: border-box;
+      background: rgba(0,0,0,0.55);
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 4rem 2rem;
+    }
+
+    /* Inner container switches layout by screen size */
+    .promotion-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 1200px;
+      width: 100%;
+      gap: 2rem;
+    }
+
+    @media (min-width: 900px) {
+      .promotion-content {
+        flex-direction: row;
+        text-align: left;
+        justify-content: center;
+      }
+      .promotion-text  { flex: 3; }
+      .promotion-image { flex: 1; max-width: 20%; }
+    }
+
+    /* === Text Styling === */
+    .promotion-header {
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 800;
+      margin: 0 0 1rem;
+      line-height: 1.2;
+    }
+
+    /* === Button === */
+    .promotion-button {
+      display: inline-block;
+      background: #e63946;
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      padding: 0.75rem 1.75rem;
+      border-radius: 4px;
+      transition: background 0.3s ease;
+    }
+    .promotion-button:hover {
+      background: #c5303b;
+    }
+
+    /* === Optional Inner Image === */
+    .promotion-image img {
+      max-width: 300px;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    /* Let the overlay grow with its content */
+   .promotion-overlay { height: auto; min-height: 60vh; }
+
+    @media (max-width: 899px) {
+      .promotion-section { overflow: visible; }
+      .promotion-overlay { padding: 2rem 1rem; } /* optional: ease tight spaces */
+    }
+
+  </style>
+
+  <div class="promotion-overlay">
+    <div class="promotion-content">
+
+      <!-- OPTIONAL LEFT IMAGE -->
+      <div class="promotion-image">
+        <img src="/assets/img/badges/BravaW.png" alt="Brava Certified Contractor">
+      </div>
+
+      <!-- TEXT & BUTTON -->
+      <div class="promotion-text">
+        <h2 class="promotion-header">SHAKE ROOF? NO PROBLEM.</h2>
+        <p class="promotion-body">
+          Having trouble maintaining or insuring your cedar shake roof? Not only have we repaired or replaced dozens of roofs like yours, we're certified installers for Brava Composite Roofing Tile. Brava is an <strong>impact-resistant solution</strong> that looks like Real Wood Shake, Stone Slate, or Clay Tile, but requires far less maintenance.
+        </p>
+        <br><br>
+        <a class="promotion-button" href="/residential/composite_roofing/">Learn More</a>
+      </div>
+
+    </div>
+  </div>
+</section>
