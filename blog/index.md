@@ -9,5 +9,5 @@ hero_alt: "A Roof Rite team member uses a heat welder to seam white TPO roofing 
 
 ### 2025
 
-[Steps for homeowners claim](steps_for_homeowners_claim) &mdash; How do I file a claim on my homeowners insurnace? This blog post won't tell you because it is just a sample.
+[Low-Slope Roof Maintenance](low_slope_maintenance) &mdash; Why yearly inspections save you money (and headaches!)
 
