@@ -16,3 +16,20 @@ have hundreds of colors and styles available from Mastic, James Hardie, Rollex, 
   {% include "cards/cardsResSiding.njk" %}
   <!-- Possible Gallery Here -->
 </div>
+
+<style>
+  .iframe-wrap {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .iframe-wrap iframe {
+    width: 100%;
+    height: calc(100dvh - 64px); /* subtract any fixed header */
+    border: 0;
+  }
+</style>
+
+<div class="iframe-wrap">
+  <iframe src="https://contractorkit.jameshardie.com/" title="James Hardie Contractor Kit" loading="lazy">
+    Your browser does not support iframes.
+  </iframe>
+</div>
