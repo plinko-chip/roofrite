@@ -20,7 +20,7 @@
       padding: 0;
       min-height: 60vh;
       overflow: hidden;
-      background: url("/assets/img/Aspen.jpg") center center / cover no-repeat;
+      background: url("/assets/img/Composite_Slate_Defects2.png") center center / cover no-repeat;
       background-color: #111;
       color: #fff;
     }
@@ -28,7 +28,7 @@
     /* Dark overlay for text readability */
     .promotion-overlay {
       box-sizing: border-box;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0,0,0,0.20);
       width: 100%;
       height: 100%;
       display: flex;
@@ -51,7 +51,7 @@
     @media (min-width: 900px) {
       .promotion-content {
         flex-direction: row;
-        text-align: left;
+        text-align: center;
         justify-content: center;
       }
       .promotion-text  { flex: 3; }
@@ -101,25 +101,62 @@
       .promotion-overlay { padding: 2rem 1rem; } /* optional: ease tight spaces */
     }
 
+        /* === Row of Damage Detail Images === */
+    .promotion-damage-row {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .promotion-damage-row img {
+      width: 15%;
+      min-width: 150px;
+      border-radius: 200px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: transform 0.3s ease;
+      border: 5px solid #e63946
+    }
+
+    .promotion-damage-row img:hover {
+      transform: scale(1.1);
+
+    }
+
+    /* Ensure overlay expands with the row */
+    .promotion-overlay { height: auto; min-height: 60vh; }
+
+
   </style>
 
   <div class="promotion-overlay">
     <div class="promotion-content">
 
       <!-- OPTIONAL LEFT IMAGE -->
-      <div class="promotion-image">
+      {#<div class="promotion-image">
         <img src="/assets/img/badges/BravaW.png" alt="Brava Certified Contractor">
-      </div>
+      </div>#}
 
       <!-- TEXT & BUTTON -->
       <div class="promotion-text">
-        <h2 class="promotion-header">SHAKE ROOF? NO PROBLEM.</h2>
+        <h2 class="promotion-header">COMPOSITE ROOF<br><i>DEFECTS</i></h2>
+
+        <div class="promotion-damage-row">
+          <img src="/assets/img/damage1.jpg" alt="Close-up of shingle damage">
+          <img src="/assets/img/damage2.jpg" alt="Splitting and curling shingles">
+          <img src="/assets/img/damage3.jpg" alt="Impact mark from hail on roof surface">
+        </div>
         <p class="promotion-body">
-          Having trouble maintaining or insuring your cedar shake roof? Not only have we repaired or replaced dozens of roofs like yours, we're certified installers for Brava Composite Roofing Tile. Brava is an <strong>impact-resistant solution</strong> that looks like Real Wood Shake, Stone Slate, or Clay Tile, but requires far less maintenance.
+          We’ve been receiving more calls for composite roofing defects for roofs installed in the past 3-15 years. Request your <strong>free, no-obligation inspection</strong> for peace of mind, or to avoid costly repairs. Our staff can identify warranty eligible defects so you can be compensated for the leak-free roof you deserve.
         </p>
         <br><br>
-        <a class="promotion-button" href="/residential/composite_roofing/">Learn More</a>
+        <a class="promotion-button" href="/about/contact">Request your Free Inspection</a>
       </div>
+
+
+
 
     </div>
   </div>
