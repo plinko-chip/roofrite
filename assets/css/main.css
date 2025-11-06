@@ -435,3 +435,64 @@ address {
   margin-left: -50vw;
   margin-right: -50vw;
 }
+
+/* === Cards (thumbs) === */
+.gl-card {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.gl-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.2); }
+.gl-card picture, .gl-card img { display: block; width: 100%; height: 100%; }
+.gl-card img { aspect-ratio: 1/1; object-fit: cover; }
+
+/* === Grid === */
+.gl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: .3rem;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* === Lightbox === */
+.gl-lightbox { position: fixed; inset: 0; z-index: 999; display: none; }
+.gl-lightbox.is-open { display: block; }
+.gl-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(5px); }
+.gl-modal {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  padding: 4vmin; touch-action: pan-y;
+  cursor: zoom-out; /* JS flips to default during animations */
+}
+
+/* Images (JS controls z-index 1/2 dynamically) */
+#gl-full, #gl-full-2 {
+  position: absolute; top: 50%; left: 50%; z-index: 1;
+  display: block; max-width: 95vw; max-height: 90vh; object-fit: contain;
+}
+
+/* Controls — force above any image */
+.gl-close {
+  position: absolute; top: 1.25rem; right: 1rem;
+  font-size: 2rem; color: #fff; background: transparent; border: 0;
+  cursor: pointer; line-height: 1; z-index: 20; /* ↑ above arrows & images */
+}
+.gl-arrow {
+  position: absolute; z-index: 15;  /* ↑ above images (even when an image is z=2) */
+  top: 50%; transform: translateY(-50%);
+  border: 0; background: rgba(0,0,0,.45); color: #fff; font-size: 2rem; line-height: 1;
+  width: 2.75rem; height: 2.75rem; border-radius: 9999px;
+  display: grid; place-items: center; cursor: pointer; user-select: none;
+}
+.gl-prev { left: 1rem; } .gl-next { right: 1rem; }
+.gl-arrow:hover { background: rgba(0,0,0,.6); }
+.gl-arrow:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Body scroll lock */
+.gl-lock { overflow: hidden; }

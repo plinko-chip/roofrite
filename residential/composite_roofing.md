@@ -16,5 +16,8 @@ They provide exceptional protection, versatile appearance, and lasting performan
 
 <div class="breakout">
   {% include "cards/cardsResComposite.njk" %}
-  <!-- Possible Gallery Here -->
+
+  {% gallery "assets/img/galleries/Composite_Roofing/**/*.{jpg,jpeg,png,webp}","Composite - " %}
+
 </div>
+
