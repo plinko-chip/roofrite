@@ -9,8 +9,8 @@
   let isAnimating = false, animToken = 0, currentAnimDir = 0; // +1 prev, -1 next
   let activeSlot = 0, imgA, imgB;
 
-  // step accumulator (replaces queuedDir)
-  let pendingSteps = 0; // +N means N steps to prev; -N means N steps to next
+  // step accumulator for swipe chaining
+  let pendingSteps = 0; // +N = prev N, -N = next N
 
   // tuning
   const CLICK_SUPPRESS_PX = 6;
@@ -23,7 +23,7 @@
   const DEFAULT_TRANSITION  = "transform .25s ease, opacity .25s ease";
   const OUT_FAST_TRANSITION = "transform .25s ease, opacity .12s ease";
 
-  // key-repeat throttle (single taps are instant)
+  // key-repeat throttle (single taps instant)
   let lastNavAt = 0;
   const canNavNow = () => { const t = performance.now(); if (t - lastNavAt < NAV_COOLDOWN_MS) return false; lastNavAt = t; return true; };
 
@@ -77,7 +77,7 @@
   function hideLoader(){ if(loadTimer){ clearTimeout(loadTimer); loadTimer=null; } if(loaderEl) loaderEl.style.display='none'; }
   const loaderVisible = ()=> loaderEl && loaderEl.style.display==='grid';
 
-  // image layers
+  // images
   function applyImgBaseStyles(img){
     Object.assign(img.style,{
       position:"absolute", top:"50%", left:"50%", zIndex:"1", display:"block",
@@ -132,7 +132,7 @@
     preload(nurl); preload(purl);
   }
 
-  // fast-finish current animation to its natural end (used before chaining)
+  // fast-finish (for swipe chaining)
   function fastFinishAnimation(){
     if(!isAnimating || loaderVisible()) return false;
     const dir = currentAnimDir || -1;
@@ -149,7 +149,7 @@
     return true;
   }
 
-  // core animation when incoming is ready
+  // animated commit (swipe)
   function animateCommit(dir, done){
     const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
     const [url,alt]=urlAltFor(targetIndex);
@@ -185,12 +185,11 @@
       setActivePointerTargets(currentImg()); setModalCursor(false);
       primeNeighbors();
       if(done) done();
-      // After finishing one step, if there are more pending, run them.
       consumePending();
     });
   }
 
-  // pending with spinner if not ready yet
+  // pending with spinner if not ready yet (swipe)
   function commitWithPreload(dir){
     const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
     const [url,alt]=urlAltFor(targetIndex);
@@ -209,7 +208,6 @@
     preload(url).then(()=>{
       if(animToken!==token) return; // superseded
       hideLoader();
-      // quick slide-in from the proper side
       const entryDir=-dir, W=offPreview(), off=entryDir*W;
       setImmediateNoAnim(inc, ()=>{ inc.src=url; inc.alt=alt; inc.style.transform=baseTransform(off); inc.style.opacity="0"; inc.style.zIndex="2"; });
       requestAnimationFrame(()=>{
@@ -223,7 +221,7 @@
           isAnimating=false; currentAnimDir=0;
           setActivePointerTargets(inc); setModalCursor(false);
           primeNeighbors();
-          consumePending(); // continue if user stacked more swipes
+          consumePending();
         });
       });
     }).catch(()=>{
@@ -239,20 +237,55 @@
     });
   }
 
-  // consume pendingSteps -> repeatedly animate/commit until 0
+  // consume pending swipes
   function consumePending(){
     if(isAnimating || loaderVisible()) return;
     if(pendingSteps===0) return;
     const stepDir = pendingSteps>0 ? +1 : -1;
-    pendingSteps -= stepDir; // consume one step
-    // If currently animating (shouldn't be), we'll resume later.
-    // Here we always kick the next step.
+    pendingSteps -= stepDir;
     isReady(urlAltFor(stepDir>0? currentIndex-1 : currentIndex+1)[0])
       ? animateCommit(stepDir)
       : commitWithPreload(stepDir);
   }
 
-  // show() for instant jumps (keys/arrows single press)
+  // ===== INSTANT NAV (arrows/keys) =====
+  function cancelInFlight(){
+    // cancel spinner/animation immediately
+    animToken++; hideLoader(); setModalCursor(false);
+    if(isAnimating && !loaderVisible()) fastFinishAnimation();
+    isAnimating=false; currentAnimDir=0;
+    pendingSteps = 0; // instant nav should not chain swipe steps
+  }
+  function instantJump(dir){
+    cancelInFlight();
+    const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
+    const [url, alt]  = urlAltFor(targetIndex);
+    openModalIfNeeded(); ensureImages();
+
+    if(isReady(url)){
+      setImageImmediate(currentImg(), url, alt);
+      currentIndex = targetIndex;
+      primeNeighbors();
+      return;
+    }
+
+    showLoader();
+    preload(url).then(()=>{
+      hideLoader();
+      setImageImmediate(currentImg(), url, alt);
+      currentIndex = targetIndex;
+      primeNeighbors();
+    }).catch(()=>{
+      hideLoader();
+      setImageImmediate(currentImg(), url, alt);
+      currentIndex = targetIndex;
+      primeNeighbors();
+    });
+  }
+  const goPrevInstant = () => instantJump(+1);
+  const goNextInstant = () => instantJump(-1);
+
+  // show() remains for internal instant swaps if you want to jump to an index
   function show(index){
     if(!currentCards.length) return;
     if(index<0) index=currentCards.length-1; if(index>=currentCards.length) index=0; currentIndex=index;
@@ -262,7 +295,7 @@
     else { showLoader(); preload(url).then(()=>{ hideLoader(); setImageImmediate(currentImg(), url, alt); primeNeighbors(); }).catch(()=>{ hideLoader(); setImageImmediate(currentImg(), url, alt); primeNeighbors(); }); }
   }
 
-  // open from grid (no flash)
+  // open from grid (preload, no flash)
   function openFromCard(card){
     currentGallery = card.closest(".gl-gallery") || document;
     currentCards   = Array.from(currentGallery.querySelectorAll(".gl-card"));
@@ -275,8 +308,10 @@
       hideLoader(); setImageImmediate(currentImg(), url, alt); openModalIfNeeded();
       setImmediateNoAnim(incomingImg(),()=>{ incomingImg().style.transform=baseTransform(0); incomingImg().style.opacity="0"; incomingImg().style.zIndex="1"; incomingImg().style.pointerEvents="none"; });
       primeNeighbors();
+      pendingSteps = 0; // start clean
     }).catch(()=>{
       hideLoader(); openModalIfNeeded(); setImageImmediate(currentImg(), url, alt); primeNeighbors();
+      pendingSteps = 0;
     });
   }
 
@@ -292,14 +327,12 @@
     currentImg().style.zIndex="1"; currentImg().style.pointerEvents="auto";
   }
 
-  // pointer handlers
+  // pointer handlers (swipe)
   function onPointerDown(e){
     const {modalEl}=els(); if(!modalEl.classList.contains("is-open")) return;
 
-    // If spinner pending, cancel that pending & clear loader
     if(isAnimating && loaderVisible()){ animToken++; isAnimating=false; currentAnimDir=0; hideLoader(); }
 
-    // If currently animating a slide, **fast finish** first so the new swipe starts from a stable state.
     if(isAnimating && !loaderVisible()) fastFinishAnimation();
 
     isDown=true; startX=e.clientX??0; startY=e.clientY??0; startT=performance.now(); suppressNextClick=false;
@@ -344,10 +377,8 @@
       previewDir=0; previewIndex=-1; return;
     }
 
-    // Accumulate the requested step and consume immediately (or chain).
-    pendingSteps += dir; // +1 = prev, -1 = next
-
-    // If free, start moving now. If animating, we'll chain when finished.
+    // accumulate and kick if idle
+    pendingSteps += dir; // +1 prev, -1 next
     if(!isAnimating && !loaderVisible()){
       const stepDir = pendingSteps>0 ? +1 : -1;
       pendingSteps -= stepDir;
@@ -355,41 +386,7 @@
         ? animateCommit(stepDir)
         : commitWithPreload(stepDir);
     }
-
     previewDir=0; previewIndex=-1;
-  }
-
-  // instant nav (keys/arrows). If animating, fast-finish first, then apply.
-  const goPrevInstant = ()=>{
-    if(isAnimating && !loaderVisible()) fastFinishAnimation();
-    pendingSteps += +1;
-    if(!isAnimating && !loaderVisible()){
-      const stepDir = +1; pendingSteps -= +1;
-      isReady(urlAltFor(currentIndex-1)[0]) ? animateCommit(stepDir) : commitWithPreload(stepDir);
-    }
-  };
-  const goNextInstant = ()=>{
-    if(isAnimating && !loaderVisible()) fastFinishAnimation();
-    pendingSteps += -1;
-    if(!isAnimating && !loaderVisible()){
-      const stepDir = -1; pendingSteps -= -1;
-      isReady(urlAltFor(currentIndex+1)[0]) ? animateCommit(stepDir) : commitWithPreload(stepDir);
-    }
-  };
-
-  // between-images gap detector (so gap clicks don’t close)
-  function clickIsBetweenImages(x,y){
-    const a=imgA, b=imgB; if(!a||!b) return false;
-    const oa=parseFloat(getComputedStyle(a).opacity||"0");
-    const ob=parseFloat(getComputedStyle(b).opacity||"0");
-    if(oa<0.05 || ob<0.05) return false;
-    const ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
-    const ca=(ra.left+ra.right)/2, cb=(rb.left+rb.right)/2;
-    const leftRect= ca<=cb? ra:rb, rightRect=ca<=cb? rb:ra;
-    if(leftRect.right>=rightRect.left) return false;
-    const inX = x>=leftRect.right && x<=rightRect.left;
-    const inY = y>=Math.min(ra.top,rb.top) && y<=Math.max(ra.bottom,rb.bottom);
-    return inX && inY;
   }
 
   // events
@@ -402,7 +399,6 @@
     if(e.target.matches("[data-gl-close]")){ close(); return; }
 
     if(e.target.closest(".gl-arrow")){
-      // held key-like throttling for mouse downs isn’t necessary; clicks are discrete
       if(e.target.matches("[data-gl-prev]")) { goPrevInstant(); }
       else if(e.target.matches("[data-gl-next]")){ goNextInstant(); }
       return;
@@ -414,9 +410,8 @@
         const r=a.getBoundingClientRect(), x=e.clientX, y=e.clientY;
         const op=parseFloat(getComputedStyle(a).opacity||"0");
         const inside = x>=r.left && x<=r.right && y>=r.top && y<=r.bottom && op>0.05;
-        if(inside || clickIsBetweenImages(x,y)) return; // do not close
+        if(inside) return; // click on image does not close
       }
-      // close only when truly outside imagery/gap
       if (suppressNextClick) { suppressNextClick=false; return; }
       close(); return;
     }
