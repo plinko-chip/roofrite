@@ -6,19 +6,22 @@
   let queuedDir = 0, queuedFromDrag = false, capturingWhileAnimating = false;
   let activeSlot = 0, imgA, imgB;
 
+  // NEW: track current animation direction so we can fast-forward it
+  // dir: +1 (going to prev), -1 (going to next)
+  let currentAnimDir = 0;
+
   // --- tuning
   const CLICK_SUPPRESS_PX = 6;
   const MIN_PX = 40, MIN_VEL = 0.55, SWIPE_MAX_Y = 80, TRANSITION_MS = 250;
-  const OFF_VW = 0.44, OFF_PX_MAX = 280; // preview/exit distance
-  const HUMP_RATIO = 0.50;               // “over the hump” commit
-  const NAV_COOLDOWN_MS = 140;           // throttle only for held keys
-  const CLOSE_COOLDOWN_MS = 220;         // block swipe+tap close
-  const LOADER_DELAY_MS = 120;           // show spinner only if truly waiting
+  const OFF_VW = 0.44, OFF_PX_MAX = 280;
+  const HUMP_RATIO = 0.50;
+  const NAV_COOLDOWN_MS = 140;
+  const LOADER_DELAY_MS = 120;
 
   const DEFAULT_TRANSITION  = "transform .25s ease, opacity .25s ease";
   const OUT_FAST_TRANSITION = "transform .25s ease, opacity .12s ease";
 
-  let lastNavAt = 0, backdropCloseCooldownUntil = 0;
+  let lastNavAt = 0;
 
   // --- utils
   const els = () => ({
@@ -30,7 +33,7 @@
   const humpPx = () => Math.round(offPreview() * HUMP_RATIO);
   const canNavNow = () => { const t = performance.now(); if (t - lastNavAt < NAV_COOLDOWN_MS) return false; lastNavAt = t; return true; };
   const baseTransform = (px=0) => `translate(-50%, -50%) translateX(${px}px)`;
-  const decisive = p => 1/(1+Math.exp(-7.5*(clamp(p,0,1)-0.5))); // snappy S-curve
+  const decisive = p => 1/(1+Math.exp(-7.5*(clamp(p,0,1)-0.5)));
 
   function setImmediateNoAnim(node, fn) {
     if (!node) return;
@@ -59,7 +62,7 @@
   function preload(url){
     if(!url) return Promise.resolve();
     if(preloadCache.has(url)) return preloadCache.get(url);
-    const p = waitImageReady(url).catch(()=>{}); // cache failures too (avoid loops)
+    const p = waitImageReady(url).catch(()=>{});
     preloadCache.set(url, p);
     return p;
   }
@@ -110,7 +113,7 @@
     const {modalEl}=els(); if(!modalEl) return;
     modalEl.classList.remove("is-open"); modalEl.setAttribute("aria-hidden","true");
     lockScroll(false); setModalCursor(false); hideLoader();
-    currentIndex=-1; currentCards=[]; currentGallery=null; isDown=false; isAnimating=false; animToken++; queuedDir=0; queuedFromDrag=false; capturingWhileAnimating=false;
+    currentIndex=-1; currentCards=[]; currentGallery=null; isDown=false; isAnimating=false; animToken++; queuedDir=0; queuedFromDrag=false; capturingWhileAnimating=false; currentAnimDir=0;
     if(imgA&&imgB){ [imgA,imgB].forEach(img=> setImmediateNoAnim(img,()=>{ img.style.transform=baseTransform(0); img.style.opacity="0"; img.style.zIndex="1"; img.style.pointerEvents="none"; img.removeAttribute("src"); img.removeAttribute("alt"); })); activeSlot=0; }
   }
 
@@ -126,7 +129,6 @@
     const c=currentCards[i]; return [c.getAttribute("data-full"), c.getAttribute("data-alt")||""];
   }
 
-  // Prime neighbors unless on 2G/Data Saver
   function primeNeighbors(){
     const conn = navigator.connection;
     const skip = conn && (conn.saveData || /(^|[^3-9])2g/i.test(conn.effectiveType||""));
@@ -136,12 +138,11 @@
     preload(nurl); preload(purl);
   }
 
-  // --- commit animation (from drag) (assumes target is ready)
+  // --- commit animation (from drag)
   function animateCommitFromDrag(dir, dx, done){
     const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
-    const entryDir = -dir; // incoming from opposite side
-    const token = ++animToken; isAnimating = true; setModalCursor(true);
-    backdropCloseCooldownUntil = performance.now() + TRANSITION_MS + CLOSE_COOLDOWN_MS;
+    const entryDir = -dir;
+    const token = ++animToken; isAnimating = true; currentAnimDir = dir; setModalCursor(true);
 
     const out=currentImg(), inc=incomingImg();
     const [url,alt]=urlAltFor(targetIndex);
@@ -153,7 +154,7 @@
 
     inc.style.zIndex="2"; out.style.zIndex="1";
     out.style.pointerEvents="none"; inc.style.pointerEvents="none";
-    out.offsetWidth; // reflow
+    out.offsetWidth;
 
     const prevTrans=out.style.transition; out.style.transition=OUT_FAST_TRANSITION;
     requestAnimationFrame(()=>{
@@ -167,12 +168,30 @@
       inc.style.zIndex="2";
       currentIndex = (dir>0) ? (currentIndex-1+currentCards.length)%currentCards.length
                              : (currentIndex+1)%currentCards.length;
-      activeSlot = 1 - activeSlot; isAnimating=false; setActivePointerTargets(currentImg()); setModalCursor(false);
+      activeSlot = 1 - activeSlot; isAnimating=false; currentAnimDir=0; setActivePointerTargets(currentImg()); setModalCursor(false);
       primeNeighbors();
 
       if(queuedDir!==0){ const q=queuedDir; queuedDir=0; queuedFromDrag=false; commitWithPreload(q, 0, done); return; }
       if(done) done();
     });
+  }
+
+  // NEW: fast-forward an in-flight animation to its end state immediately
+  function fastForwardCurrentAnimation(){
+    if(!isAnimating || currentAnimDir===0) return;
+    const dir = currentAnimDir;
+    const out = currentImg();
+    const inc = incomingImg();
+    // snap to final visual state
+    setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(0); out.style.opacity="0"; out.style.zIndex="1"; });
+    setImmediateNoAnim(inc, ()=>{ inc.style.transform=baseTransform(0); inc.style.opacity="1"; inc.style.zIndex="2"; });
+    // finalize logical state
+    currentIndex = (dir>0) ? (currentIndex-1+currentCards.length)%currentCards.length
+                           : (currentIndex+1)%currentCards.length;
+    activeSlot = 1 - activeSlot;
+    isAnimating = false; currentAnimDir = 0;
+    setActivePointerTargets(currentImg()); setModalCursor(false);
+    primeNeighbors();
   }
 
   // Commit but ensure target is decoded; show spinner if slow
@@ -184,14 +203,12 @@
                 .catch(()=>{ hideLoader(); animateCommitFromDrag(dir, dx, done); });
   }
 
-  // --- instant show (keys/arrows) with preload awareness
+  // --- instant show (keys/arrows)
   function show(index){
     if(!currentCards.length) return;
     if(index<0) index=currentCards.length-1; if(index>=currentCards.length) index=0; currentIndex=index;
     const c=currentCards[currentIndex], url=c.getAttribute("data-full"), alt=c.getAttribute("data-alt")||"";
     openModalIfNeeded(); ensureImages();
-
-    // if already warm, snap; else show spinner briefly to avoid stale flash
     const cached = preloadCache.get(url);
     if(cached){
       cached.then(()=>{ setImageImmediate(currentImg(), url, alt); primeNeighbors(); })
@@ -203,7 +220,7 @@
     }
   }
 
-  // --- open from grid (preload & then reveal backdrop + image together)
+  // --- open from grid
   function openFromCard(card){
     currentGallery = card.closest(".gl-gallery") || document;
     currentCards   = Array.from(currentGallery.querySelectorAll(".gl-card"));
@@ -235,26 +252,33 @@
     previewDir=dir; previewIndex = dir>0 ? currentIndex-1 : currentIndex+1;
     const [url,alt]=urlAltFor(previewIndex), inc=incomingImg();
     const W=offPreview(), off=(-dir)*W;
-    preload(url); // warm asynchronously
+    preload(url);
     setImmediateNoAnim(inc, ()=>{ inc.src=url; inc.alt=alt; inc.style.transform=baseTransform(off); inc.style.opacity="0"; inc.style.zIndex="2"; inc.style.pointerEvents="none"; });
     currentImg().style.zIndex="1"; currentImg().style.pointerEvents="auto";
   }
 
   function onPointerDown(e){
-    const {modalEl}=els(); if(!modalEl.classList.contains("is-open")) return;
-    capturingWhileAnimating = isAnimating;
+    const {modalEl}=els();
+    if(!modalEl.classList.contains("is-open")) return;
+
+    // NEW: if we're mid-animation and user begins a NEW swipe, fast-forward now
+    if (isAnimating) {
+      fastForwardCurrentAnimation();
+    }
+
+    capturingWhileAnimating = false; // we've just snapped; treat fresh
     isDown=true; startX=e.clientX??0; startY=e.clientY??0; startT=performance.now(); suppressNextClick=false; e.preventDefault();
 
-    if(!capturingWhileAnimating){
-      const out=currentImg(), inc=incomingImg();
-      setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(0); out.style.opacity="1"; out.style.zIndex="1"; out.style.pointerEvents="auto"; });
-      setImmediateNoAnim(inc, ()=>{ inc.style.transform=baseTransform(0); inc.style.opacity="0"; inc.style.zIndex="2"; inc.style.pointerEvents="none"; });
-    }
+    const out=currentImg(), inc=incomingImg();
+    setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(0); out.style.opacity="1"; out.style.zIndex="1"; out.style.pointerEvents="auto"; });
+    setImmediateNoAnim(inc, ()=>{ inc.style.transform=baseTransform(0); inc.style.opacity="0"; inc.style.zIndex="2"; inc.style.pointerEvents="none"; });
   }
+
   function onPointerMove(e){
-    if(!isDown || isAnimating) return;
+    if(!isDown) return;
     const x=e.clientX??0, y=e.clientY??0, dx=x-startX, dy=Math.abs(y-startY);
-    if(Math.abs(dx)>CLICK_SUPPRESS_PX) suppressNextClick=true; if(dy>SWIPE_MAX_Y) return;
+    if(Math.abs(dx)>CLICK_SUPPRESS_PX) suppressNextClick=true;
+    if(dy>SWIPE_MAX_Y || isAnimating) return;
 
     const out=currentImg(), inc=incomingImg();
     inc.style.zIndex="2"; out.style.zIndex="1";
@@ -272,13 +296,13 @@
       inc.style.opacity  = String(pDec);
     }
   }
+
   function onPointerUp(e){
     if(!isDown) return; isDown=false;
     const endX=e.clientX??startX, dt=Math.max(1, performance.now()-startT);
     const dx=endX-startX, vel=Math.abs(dx)/dt, dir=dx>0 ? +1 : -1;
     const commit = (Math.abs(dx)>=humpPx()) || (Math.abs(dx)>=MIN_PX && vel>=MIN_VEL);
 
-    if(isAnimating){ if(commit){ queuedDir=dir; queuedFromDrag=true; suppressNextClick=true; } return; }
     if(!commit){
       const out=currentImg(), inc=incomingImg(), W=offPreview(), off=(-dir)*W;
       out.style.transform=baseTransform(0); out.style.opacity="1"; out.style.pointerEvents="auto";
@@ -287,14 +311,14 @@
       previewDir=0; previewIndex=-1; return;
     }
 
+    // Commit immediately (we already fast-forwarded any in-flight anim on pointerdown)
     suppressNextClick = true;
-    backdropCloseCooldownUntil = performance.now() + TRANSITION_MS + CLOSE_COOLDOWN_MS;
     commitWithPreload(dir, dx, ()=>{ previewDir=0; previewIndex=-1; });
   }
 
   // --- instant navigation
-  const goPrevInstant = ()=>{ if(isAnimating){ queuedDir=+1; queuedFromDrag=false; return; } if(currentCards.length) show(currentIndex-1); };
-  const goNextInstant = ()=>{ if(isAnimating){ queuedDir=-1; queuedFromDrag=false; return; } if(currentCards.length) show(currentIndex+1); };
+  const goPrevInstant = ()=>{ if(isAnimating){ fastForwardCurrentAnimation(); } if(currentCards.length) show(currentIndex-1); };
+  const goNextInstant = ()=>{ if(isAnimating){ fastForwardCurrentAnimation(); } if(currentCards.length) show(currentIndex+1); };
 
   // --- events
   document.addEventListener("click", (e)=>{
@@ -305,24 +329,22 @@
     if(e.target.matches("[data-gl-close]")){ close(); return; }
     if(e.target.closest(".gl-arrow")){ if(e.target.matches("[data-gl-prev]")) goPrevInstant(); else if(e.target.matches("[data-gl-next]")) goNextInstant(); return; }
 
-    if(isAnimating || performance.now() < backdropCloseCooldownUntil) return;
-
+    // NEW: allow immediate backdrop/padding close even right after a swipe
     const img=currentImg();
     if(img && img.src){
       const r=img.getBoundingClientRect(), x=e.clientX, y=e.clientY, op=parseFloat(getComputedStyle(img).opacity||"0");
       const inside = x>=r.left && x<=r.right && y>=r.top && y<=r.bottom && op>0.05;
-      if(inside) return; // image click: do nothing
+      if(inside) return; // clicks on image do nothing
     }
-
-    if(suppressNextClick){ suppressNextClick=false; return; }
+    // backdrop/padding click closes right away
     if(modalEl && modalEl.classList.contains("is-open")) close();
   });
 
   document.addEventListener("keydown", (e)=>{
     const {modalEl}=els(); if(!modalEl || !modalEl.classList.contains("is-open")) return;
     if(e.key==="Escape"){ close(); return; }
-    if(e.key==="ArrowLeft"){ if(isAnimating){ queuedDir=+1; queuedFromDrag=false; return; } if(e.repeat && !canNavNow()) return; goPrevInstant(); return; }
-    if(e.key==="ArrowRight"){ if(isAnimating){ queuedDir=-1; queuedFromDrag=false; return; } if(e.repeat && !canNavNow()) return; goNextInstant(); return; }
+    if(e.key==="ArrowLeft"){ if(e.repeat && !canNavNow()) return; goPrevInstant(); return; }
+    if(e.key==="ArrowRight"){ if(e.repeat && !canNavNow()) return; goNextInstant(); return; }
   });
 
   function blockScrollEvents(node){
