@@ -34,6 +34,10 @@
   const humpPx = () => Math.round(offPreview() * HUMP_RATIO);
   const baseTransform = (px=0) => `translate(-50%, -50%) translateX(${px}px)`;
   const decisive = p => 1/(1+Math.exp(-7.5*(clamp(p,0,1)-0.5)));
+  const norm = (i) => {
+    const n = currentCards.length || 1;
+    return ((i % n) + n) % n;
+  };
 
   function setImmediateNoAnim(node, fn){ if(!node) return; const prev=node.style.transition; node.style.transition="none"; fn(); node.offsetWidth; node.style.transition=prev||""; }
   function waitImageReady(url){
@@ -121,8 +125,9 @@
     });
   }
   function urlAltFor(i){
-    if(i<0) i=currentCards.length-1; if(i>=currentCards.length) i=0;
-    const c=currentCards[i]; return [c.getAttribute("data-full"), c.getAttribute("data-alt")||""];
+    const j = norm(i);
+    const c=currentCards[j];
+    return [c.getAttribute("data-full"), c.getAttribute("data-alt")||"", j];
   }
   function primeNeighbors(){
     const conn=navigator.connection;
@@ -140,8 +145,7 @@
     const W=offPreview(), entryDir=-dir, outGoal=-entryDir*W;
     setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(outGoal); out.style.opacity="0"; out.style.zIndex="1"; });
     setImmediateNoAnim(inc, ()=>{ inc.style.transform=baseTransform(0); inc.style.opacity="1"; inc.style.zIndex="2"; });
-    currentIndex = (dir>0) ? (currentIndex-1+currentCards.length)%currentCards.length
-                           : (currentIndex+1)%currentCards.length;
+    currentIndex = norm(dir>0 ? currentIndex-1 : currentIndex+1);
     activeSlot = 1 - activeSlot;
     isAnimating=false; currentAnimDir=0;
     setActivePointerTargets(currentImg()); setModalCursor(false);
@@ -151,8 +155,7 @@
 
   // animated commit (swipe)
   function animateCommit(dir, done){
-    const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
-    const [url,alt]=urlAltFor(targetIndex);
+    const [url,alt,targetIndex] = urlAltFor(dir>0 ? currentIndex-1 : currentIndex+1);
     const entryDir = -dir;
     const token = ++animToken;
     isAnimating=true; currentAnimDir=dir; setModalCursor(true);
@@ -178,8 +181,7 @@
       out.style.transition=prevTrans||DEFAULT_TRANSITION; if(!ok) return;
       setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(0); out.style.opacity="0"; out.style.zIndex="1"; });
       inc.style.zIndex="2";
-      currentIndex = (dir>0) ? (currentIndex-1+currentCards.length)%currentCards.length
-                             : (currentIndex+1)%currentCards.length;
+      currentIndex = targetIndex;                // <-- wrapped index
       activeSlot = 1 - activeSlot;
       isAnimating=false; currentAnimDir=0;
       setActivePointerTargets(currentImg()); setModalCursor(false);
@@ -191,8 +193,7 @@
 
   // pending with spinner if not ready yet (swipe)
   function commitWithPreload(dir){
-    const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
-    const [url,alt]=urlAltFor(targetIndex);
+    const [url,alt,targetIndex] = urlAltFor(dir>0 ? currentIndex-1 : currentIndex+1);
 
     if(isReady(url)){ animateCommit(dir); return; }
 
@@ -208,15 +209,15 @@
     preload(url).then(()=>{
       if(animToken!==token) return; // superseded
       hideLoader();
-      const entryDir=-dir, W=offPreview(), off=entryDir*W;
+      const entryDir = -(dir);
+      const W=offPreview(), off=entryDir*W;
       setImmediateNoAnim(inc, ()=>{ inc.src=url; inc.alt=alt; inc.style.transform=baseTransform(off); inc.style.opacity="0"; inc.style.zIndex="2"; });
       requestAnimationFrame(()=>{
         currentAnimDir=dir;
         inc.style.transform=baseTransform(0); inc.style.opacity="1";
         waitTransitionEnd(inc, token).then(ok=>{
           if(!ok) return;
-          currentIndex = (dir>0) ? (currentIndex-1+currentCards.length)%currentCards.length
-                                 : (currentIndex+1)%currentCards.length;
+          currentIndex = targetIndex;           // <-- wrapped index
           activeSlot = (inc===imgA?0:1);
           isAnimating=false; currentAnimDir=0;
           setActivePointerTargets(inc); setModalCursor(false);
@@ -228,8 +229,7 @@
       if(animToken!==token) return;
       hideLoader();
       setImageImmediate(incomingImg(), url, alt);
-      currentIndex = (dir>0) ? (currentIndex-1+currentCards.length)%currentCards.length
-                             : (currentIndex+1)%currentCards.length;
+      currentIndex = targetIndex;               // <-- wrapped index
       activeSlot = 1 - activeSlot; isAnimating=false; currentAnimDir=0;
       setActivePointerTargets(currentImg()); setModalCursor(false);
       primeNeighbors();
@@ -243,9 +243,8 @@
     if(pendingSteps===0) return;
     const stepDir = pendingSteps>0 ? +1 : -1;
     pendingSteps -= stepDir;
-    isReady(urlAltFor(stepDir>0? currentIndex-1 : currentIndex+1)[0])
-      ? animateCommit(stepDir)
-      : commitWithPreload(stepDir);
+    const [u] = urlAltFor(stepDir>0? currentIndex-1 : currentIndex+1);
+    isReady(u) ? animateCommit(stepDir) : commitWithPreload(stepDir);
   }
 
   // ===== INSTANT NAV (arrows/keys) =====
@@ -257,14 +256,17 @@
     pendingSteps = 0; // instant nav should not chain swipe steps
   }
   function instantJump(dir){
+    // dir: +1 prev, -1 next
     cancelInFlight();
-    const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
-    const [url, alt]  = urlAltFor(targetIndex);
+    const rawIndex   = dir>0 ? currentIndex-1 : currentIndex+1;
+    const target     = norm(rawIndex);                   // <-- wrap here
+    const [url, alt] = urlAltFor(target);               // (returns wrapped anyway)
+
     openModalIfNeeded(); ensureImages();
 
     if(isReady(url)){
       setImageImmediate(currentImg(), url, alt);
-      currentIndex = targetIndex;
+      currentIndex = target;                            // <-- keep wrapped index
       primeNeighbors();
       return;
     }
@@ -273,12 +275,12 @@
     preload(url).then(()=>{
       hideLoader();
       setImageImmediate(currentImg(), url, alt);
-      currentIndex = targetIndex;
+      currentIndex = target;                            // <-- keep wrapped index
       primeNeighbors();
     }).catch(()=>{
       hideLoader();
       setImageImmediate(currentImg(), url, alt);
-      currentIndex = targetIndex;
+      currentIndex = target;                            // <-- keep wrapped index
       primeNeighbors();
     });
   }
@@ -288,7 +290,7 @@
   // show() remains for internal instant swaps if you want to jump to an index
   function show(index){
     if(!currentCards.length) return;
-    if(index<0) index=currentCards.length-1; if(index>=currentCards.length) index=0; currentIndex=index;
+    currentIndex = norm(index);
     const c=currentCards[currentIndex], url=c.getAttribute("data-full"), alt=c.getAttribute("data-alt")||"";
     openModalIfNeeded(); ensureImages();
     if(isReady(url)){ setImageImmediate(currentImg(), url, alt); primeNeighbors(); }
@@ -319,8 +321,8 @@
   let previewDir=0, previewIndex=-1;
   function ensurePreview(dir){
     if(previewDir===dir) return;
-    previewDir=dir; previewIndex = dir>0 ? currentIndex-1 : currentIndex+1;
-    const [url,alt]=urlAltFor(previewIndex), inc=incomingImg();
+    previewDir=dir; previewIndex = norm(dir>0 ? currentIndex-1 : currentIndex+1);
+    const [url,alt] = urlAltFor(previewIndex), inc=incomingImg();
     const W=offPreview(), off=(-dir)*W;
     preload(url);
     setImmediateNoAnim(inc, ()=>{ inc.src=url; inc.alt=alt; inc.style.transform=baseTransform(off); inc.style.opacity="0"; inc.style.zIndex="2"; inc.style.pointerEvents="none"; });
@@ -382,9 +384,8 @@
     if(!isAnimating && !loaderVisible()){
       const stepDir = pendingSteps>0 ? +1 : -1;
       pendingSteps -= stepDir;
-      isReady(urlAltFor(stepDir>0? currentIndex-1 : currentIndex+1)[0])
-        ? animateCommit(stepDir)
-        : commitWithPreload(stepDir);
+      const [u] = urlAltFor(stepDir>0? currentIndex-1 : currentIndex+1);
+      isReady(u) ? animateCommit(stepDir) : commitWithPreload(stepDir);
     }
     previewDir=0; previewIndex=-1;
   }
@@ -460,4 +461,5 @@
       modalInner.addEventListener("pointercancel", ()=>{ isDown=false; });
     }
   });
+
 })();
