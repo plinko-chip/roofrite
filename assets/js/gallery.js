@@ -13,8 +13,11 @@
   const HUMP_RATIO = 0.50;               // “over the hump” commit
   const NAV_COOLDOWN_MS = 140;           // throttle only for held keys
   const CLOSE_COOLDOWN_MS = 220;         // block swipe+tap close
+  const LOADER_DELAY_MS = 120;           // show spinner only if truly waiting
+
   const DEFAULT_TRANSITION  = "transform .25s ease, opacity .25s ease";
   const OUT_FAST_TRANSITION = "transform .25s ease, opacity .12s ease";
+
   let lastNavAt = 0, backdropCloseCooldownUntil = 0;
 
   // --- utils
@@ -51,6 +54,30 @@
   function lockScroll(lock){ document.body.classList.toggle("gl-lock", !!lock); }
   function setModalCursor(anim){ const {modalInner}=els(); if(modalInner) modalInner.style.cursor = anim ? "default" : "zoom-out"; }
 
+  // --- tiny preload cache
+  const preloadCache = new Map();
+  function preload(url){
+    if(!url) return Promise.resolve();
+    if(preloadCache.has(url)) return preloadCache.get(url);
+    const p = waitImageReady(url).catch(()=>{}); // cache failures too (avoid loops)
+    preloadCache.set(url, p);
+    return p;
+  }
+
+  // --- spinner
+  let loaderEl=null, loadTimer=null;
+  function ensureLoader(){
+    const {modalInner}=els();
+    if(!loaderEl){
+      loaderEl = document.createElement("div");
+      loaderEl.className = "gl-loading";
+      loaderEl.innerHTML = '<div class="gl-spinner" aria-hidden="true"></div>';
+      modalInner.appendChild(loaderEl);
+    }
+  }
+  function showLoader(){ ensureLoader(); if(loadTimer) clearTimeout(loadTimer); loadTimer=setTimeout(()=>{ loaderEl.style.display='grid'; }, LOADER_DELAY_MS); }
+  function hideLoader(){ if(loadTimer){ clearTimeout(loadTimer); loadTimer=null; } if(loaderEl) loaderEl.style.display='none'; }
+
   // --- layers
   function applyImgBaseStyles(img){
     Object.assign(img.style,{
@@ -82,7 +109,7 @@
   function close(){
     const {modalEl}=els(); if(!modalEl) return;
     modalEl.classList.remove("is-open"); modalEl.setAttribute("aria-hidden","true");
-    lockScroll(false); setModalCursor(false);
+    lockScroll(false); setModalCursor(false); hideLoader();
     currentIndex=-1; currentCards=[]; currentGallery=null; isDown=false; isAnimating=false; animToken++; queuedDir=0; queuedFromDrag=false; capturingWhileAnimating=false;
     if(imgA&&imgB){ [imgA,imgB].forEach(img=> setImmediateNoAnim(img,()=>{ img.style.transform=baseTransform(0); img.style.opacity="0"; img.style.zIndex="1"; img.style.pointerEvents="none"; img.removeAttribute("src"); img.removeAttribute("alt"); })); activeSlot=0; }
   }
@@ -99,7 +126,17 @@
     const c=currentCards[i]; return [c.getAttribute("data-full"), c.getAttribute("data-alt")||""];
   }
 
-  // --- commit animation (from drag)
+  // Prime neighbors unless on 2G/Data Saver
+  function primeNeighbors(){
+    const conn = navigator.connection;
+    const skip = conn && (conn.saveData || /(^|[^3-9])2g/i.test(conn.effectiveType||""));
+    if(skip) return;
+    const [nurl] = urlAltFor(currentIndex+1);
+    const [purl] = urlAltFor(currentIndex-1);
+    preload(nurl); preload(purl);
+  }
+
+  // --- commit animation (from drag) (assumes target is ready)
   function animateCommitFromDrag(dir, dx, done){
     const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
     const entryDir = -dir; // incoming from opposite side
@@ -131,18 +168,39 @@
       currentIndex = (dir>0) ? (currentIndex-1+currentCards.length)%currentCards.length
                              : (currentIndex+1)%currentCards.length;
       activeSlot = 1 - activeSlot; isAnimating=false; setActivePointerTargets(currentImg()); setModalCursor(false);
+      primeNeighbors();
 
-      if(queuedDir!==0){ const q=queuedDir; queuedDir=0; queuedFromDrag=false; animateCommitFromDrag(q,0,done); return; }
+      if(queuedDir!==0){ const q=queuedDir; queuedDir=0; queuedFromDrag=false; commitWithPreload(q, 0, done); return; }
       if(done) done();
     });
   }
 
-  // --- instant show (keys/arrows)
+  // Commit but ensure target is decoded; show spinner if slow
+  function commitWithPreload(dir, dx, done){
+    const targetIndex = dir>0 ? currentIndex-1 : currentIndex+1;
+    const [url] = urlAltFor(targetIndex);
+    showLoader();
+    preload(url).then(()=>{ hideLoader(); animateCommitFromDrag(dir, dx, done); })
+                .catch(()=>{ hideLoader(); animateCommitFromDrag(dir, dx, done); });
+  }
+
+  // --- instant show (keys/arrows) with preload awareness
   function show(index){
     if(!currentCards.length) return;
     if(index<0) index=currentCards.length-1; if(index>=currentCards.length) index=0; currentIndex=index;
     const c=currentCards[currentIndex], url=c.getAttribute("data-full"), alt=c.getAttribute("data-alt")||"";
-    openModalIfNeeded(); ensureImages(); setImageImmediate(currentImg(), url, alt);
+    openModalIfNeeded(); ensureImages();
+
+    // if already warm, snap; else show spinner briefly to avoid stale flash
+    const cached = preloadCache.get(url);
+    if(cached){
+      cached.then(()=>{ setImageImmediate(currentImg(), url, alt); primeNeighbors(); })
+            .catch(()=>{ setImageImmediate(currentImg(), url, alt); primeNeighbors(); });
+    } else {
+      showLoader();
+      preload(url).then(()=>{ hideLoader(); setImageImmediate(currentImg(), url, alt); primeNeighbors(); })
+                  .catch(()=>{ hideLoader(); setImageImmediate(currentImg(), url, alt); primeNeighbors(); });
+    }
   }
 
   // --- open from grid (preload & then reveal backdrop + image together)
@@ -155,13 +213,19 @@
 
     [imgA,imgB].forEach(img=> setImmediateNoAnim(img,()=>{ img.style.transform=baseTransform(0); img.style.opacity="0"; img.style.zIndex="1"; img.style.pointerEvents="none"; img.removeAttribute("src"); img.removeAttribute("alt"); }));
 
-    waitImageReady(url).then(()=>{
+    showLoader();
+    preload(url).then(()=>{
+      hideLoader();
       setImageImmediate(currentImg(), url, alt);
-      requestAnimationFrame(()=>{
-        openModalIfNeeded();
-        setImmediateNoAnim(incomingImg(),()=>{ incomingImg().style.transform=baseTransform(0); incomingImg().style.opacity="0"; incomingImg().style.zIndex="1"; incomingImg().style.pointerEvents="none"; });
-      });
-    }).catch(()=>{ requestAnimationFrame(()=>{ openModalIfNeeded(); setImageImmediate(currentImg(), url, alt); }); });
+      openModalIfNeeded();
+      setImmediateNoAnim(incomingImg(),()=>{ incomingImg().style.transform=baseTransform(0); incomingImg().style.opacity="0"; incomingImg().style.zIndex="1"; incomingImg().style.pointerEvents="none"; });
+      primeNeighbors();
+    }).catch(()=>{
+      hideLoader();
+      openModalIfNeeded();
+      setImageImmediate(currentImg(), url, alt);
+      primeNeighbors();
+    });
   }
 
   // --- drag with preview
@@ -171,6 +235,7 @@
     previewDir=dir; previewIndex = dir>0 ? currentIndex-1 : currentIndex+1;
     const [url,alt]=urlAltFor(previewIndex), inc=incomingImg();
     const W=offPreview(), off=(-dir)*W;
+    preload(url); // warm asynchronously
     setImmediateNoAnim(inc, ()=>{ inc.src=url; inc.alt=alt; inc.style.transform=baseTransform(off); inc.style.opacity="0"; inc.style.zIndex="2"; inc.style.pointerEvents="none"; });
     currentImg().style.zIndex="1"; currentImg().style.pointerEvents="auto";
   }
@@ -224,7 +289,7 @@
 
     suppressNextClick = true;
     backdropCloseCooldownUntil = performance.now() + TRANSITION_MS + CLOSE_COOLDOWN_MS;
-    animateCommitFromDrag(dir, dx, ()=>{ previewDir=0; previewIndex=-1; });
+    commitWithPreload(dir, dx, ()=>{ previewDir=0; previewIndex=-1; });
   }
 
   // --- instant navigation
