@@ -137,18 +137,41 @@
     preload(nurl); preload(purl);
   }
 
-  // fast-finish (for swipe chaining)
+  // === FIXED fast-finish (for swipe chaining / opposite-direction interrupt)
   function fastFinishAnimation(){
     if(!isAnimating || loaderVisible()) return false;
-    const dir = currentAnimDir || -1;
+
+    // Invalidate any pending transitionend from the interrupted animation.
+    animToken++;
+
+    const dir = currentAnimDir || -1; // last committed dir (+1 prev, -1 next)
     const out=currentImg(), inc=incomingImg();
+
+    // Use the same end positions as the animated flow.
     const W=offPreview(), entryDir=-dir, outGoal=-entryDir*W;
-    setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(outGoal); out.style.opacity="0"; out.style.zIndex="1"; });
-    setImmediateNoAnim(inc, ()=>{ inc.style.transform=baseTransform(0); inc.style.opacity="1"; inc.style.zIndex="2"; });
+
+    // Hard set end states without animation.
+    setImmediateNoAnim(out, ()=>{ 
+      out.style.transform=baseTransform(outGoal); 
+      out.style.opacity="0"; 
+      out.style.zIndex="1"; 
+      out.style.pointerEvents="none";
+    });
+    setImmediateNoAnim(inc, ()=>{ 
+      inc.style.transform=baseTransform(0); 
+      inc.style.opacity="1"; 
+      inc.style.zIndex="2"; 
+      inc.style.pointerEvents="auto";
+    });
+
+    // Flip logical state.
     currentIndex = norm(dir>0 ? currentIndex-1 : currentIndex+1);
-    activeSlot = 1 - activeSlot;
-    isAnimating=false; currentAnimDir=0;
-    setActivePointerTargets(currentImg()); setModalCursor(false);
+    activeSlot   = 1 - activeSlot;
+    isAnimating  = false;
+    currentAnimDir = 0;
+
+    setActivePointerTargets(currentImg());
+    setModalCursor(false);
     primeNeighbors();
     return true;
   }
@@ -181,7 +204,7 @@
       out.style.transition=prevTrans||DEFAULT_TRANSITION; if(!ok) return;
       setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(0); out.style.opacity="0"; out.style.zIndex="1"; });
       inc.style.zIndex="2";
-      currentIndex = targetIndex;                // <-- wrapped index
+      currentIndex = targetIndex;                // wrapped index
       activeSlot = 1 - activeSlot;
       isAnimating=false; currentAnimDir=0;
       setActivePointerTargets(currentImg()); setModalCursor(false);
@@ -217,7 +240,7 @@
         inc.style.transform=baseTransform(0); inc.style.opacity="1";
         waitTransitionEnd(inc, token).then(ok=>{
           if(!ok) return;
-          currentIndex = targetIndex;           // <-- wrapped index
+          currentIndex = targetIndex;           // wrapped index
           activeSlot = (inc===imgA?0:1);
           isAnimating=false; currentAnimDir=0;
           setActivePointerTargets(inc); setModalCursor(false);
@@ -229,7 +252,7 @@
       if(animToken!==token) return;
       hideLoader();
       setImageImmediate(incomingImg(), url, alt);
-      currentIndex = targetIndex;               // <-- wrapped index
+      currentIndex = targetIndex;               // wrapped index
       activeSlot = 1 - activeSlot; isAnimating=false; currentAnimDir=0;
       setActivePointerTargets(currentImg()); setModalCursor(false);
       primeNeighbors();
@@ -259,14 +282,14 @@
     // dir: +1 prev, -1 next
     cancelInFlight();
     const rawIndex   = dir>0 ? currentIndex-1 : currentIndex+1;
-    const target     = norm(rawIndex);                   // <-- wrap here
-    const [url, alt] = urlAltFor(target);               // (returns wrapped anyway)
+    const target     = norm(rawIndex);                   // wrap here
+    const [url, alt] = urlAltFor(target);
 
     openModalIfNeeded(); ensureImages();
 
     if(isReady(url)){
       setImageImmediate(currentImg(), url, alt);
-      currentIndex = target;                            // <-- keep wrapped index
+      currentIndex = target;                            // keep wrapped index
       primeNeighbors();
       return;
     }
@@ -275,12 +298,12 @@
     preload(url).then(()=>{
       hideLoader();
       setImageImmediate(currentImg(), url, alt);
-      currentIndex = target;                            // <-- keep wrapped index
+      currentIndex = target;                            // keep wrapped index
       primeNeighbors();
     }).catch(()=>{
       hideLoader();
       setImageImmediate(currentImg(), url, alt);
-      currentIndex = target;                            // <-- keep wrapped index
+      currentIndex = target;                            // keep wrapped index
       primeNeighbors();
     });
   }
@@ -330,12 +353,20 @@
   }
 
   // pointer handlers (swipe)
+
+  // === FIXED: finish any running animation/loader cleanly before drag begins
   function onPointerDown(e){
     const {modalEl}=els(); if(!modalEl.classList.contains("is-open")) return;
 
-    if(isAnimating && loaderVisible()){ animToken++; isAnimating=false; currentAnimDir=0; hideLoader(); }
+    // If a loader-only phase was running, cancel it cleanly.
+    if(isAnimating && loaderVisible()){
+      animToken++; isAnimating=false; currentAnimDir=0; hideLoader();
+    }
 
-    if(isAnimating && !loaderVisible()) fastFinishAnimation();
+    // If a transition animation was running, hard-finish it first.
+    if(isAnimating && !loaderVisible()){
+      fastFinishAnimation();
+    }
 
     isDown=true; startX=e.clientX??0; startY=e.clientY??0; startT=performance.now(); suppressNextClick=false;
     e.preventDefault();
@@ -344,6 +375,7 @@
     setImmediateNoAnim(out, ()=>{ out.style.transform=baseTransform(0); out.style.opacity="1"; out.style.zIndex="1"; out.style.pointerEvents="auto"; });
     setImmediateNoAnim(inc, ()=>{ inc.style.transform=baseTransform(0); inc.style.opacity="0"; inc.style.zIndex="2"; inc.style.pointerEvents="none"; });
   }
+
   function onPointerMove(e){
     if(!isDown || isAnimating) return;
     const x=e.clientX??0, y=e.clientY??0, dx=x-startX, dy=Math.abs(y-startY);
@@ -365,6 +397,7 @@
       inc.style.opacity  = String(pDec);
     }
   }
+
   function onPointerUp(e){
     if(!isDown) return; isDown=false;
     const endX=e.clientX??startX, dt=Math.max(1, performance.now()-startT);
