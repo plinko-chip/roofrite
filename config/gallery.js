@@ -2,8 +2,9 @@
 const Image = require("@11ty/eleventy-img");
 const fg = require("fast-glob");
 const path = require("path");
+const { syncGalleryAlts, altForFile } = require("./gallery-alts");
 
-// unchanged helper: responsive <picture>
+// helper: responsive <picture>
 async function imgHTML(src, alt = "", sizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw") {
   const metadata = await Image(src, {
     widths: [320, 640, 960, 1280, 1600],
@@ -14,54 +15,73 @@ async function imgHTML(src, alt = "", sizes = "(max-width: 640px) 50vw, (max-wid
   });
   const largestJpeg = metadata.jpeg[metadata.jpeg.length - 1];
   const picture = Image.generateHTML(metadata, {
-    alt, sizes, loading: "lazy", decoding: "async",
+    alt,
+    sizes,
+    loading: "lazy",
+    decoding: "async",
   });
   return { picture, href: largestJpeg.url };
 }
 
-// convert repo path to site URL (for passthrough files like .gif)
-function toUrl(file) {
-  return "/" + file.replace(/\\/g, "/").replace(/^\/+/, "");
-}
-
 module.exports = function (eleventyConfig) {
-  eleventyConfig.addNunjucksAsyncShortcode("gallery", async function (pattern, altPrefix = "") {
-    const files = await fg(pattern, { onlyFiles: true });
+  eleventyConfig.addNunjucksAsyncShortcode("gallery", async function (pattern /* keeps your glob usage */) {
+    // resolve and sort files deterministically
+    const files = (await fg(pattern, { onlyFiles: true })).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+    );
 
-    const cards = await Promise.all(files.map(async (file) => {
-      const alt = `${altPrefix}${path.basename(file)}`;
-      const ext = path.extname(file).toLowerCase();
+    // cache manifests per folder so we only read/write each once
+    const manifestCache = new Map(); // dirAbs -> manifestObj
 
-      if (ext === ".gif") {
-        // === GIF branch ===
-        // 1) Poster thumbnail (static first frame) via eleventy-img
-        const poster = await imgHTML(file, alt);
-        // 2) Lightbox opens the ORIGINAL GIF (ensure .gif is a passthrough)
-        const href = toUrl(file);
+    function getAltForAbsoluteFile(absPath) {
+      const dirAbs = path.dirname(absPath);
+      const fileBasename = path.basename(absPath);
 
-        return `<button class="gl-card is-gif" type="button" data-full="${href}" data-alt="${alt}" aria-label="Open ${alt}">${poster.picture}</button>`;
-      } else {
-        // === normal images ===
-        const { picture, href } = await imgHTML(file, alt);
-        return `<button class="gl-card" type="button" data-full="${href}" data-alt="${alt}" aria-label="Open ${alt}">${picture}</button>`;
+      let manifest = manifestCache.get(dirAbs);
+      if (!manifest) {
+        // create/update _gallery-alts.json in this folder (adds missing keys, removes stale)
+        manifest = syncGalleryAlts(dirAbs);
+        manifestCache.set(dirAbs, manifest);
       }
-    }));
 
-    const cardsHtml = cards.map(c => c.trim()).join("");
+      // resolve alt: non-empty => use; "" => default; missing => humanized filename
+      const { alt } = altForFile(manifest, fileBasename);
+      // basic escaping for quotes inside attribute
+      return alt.replace(/"/g, "&quot;");
+    }
 
+    // build cards
+    const cards = await Promise.all(
+      files.map(async (absFile) => {
+        const alt = getAltForAbsoluteFile(path.resolve(absFile));
+        const { picture, href } = await imgHTML(absFile, alt);
+        return `
+          <button class="gl-card" type="button"
+                  data-full="${href}"
+                  data-alt="${alt}"
+                  aria-label="Open ${alt}">
+            ${picture}
+          </button>
+        `;
+      })
+    );
+
+    const cardsHtml = cards.map((c) => c.trim()).join("");
+
+    // lightbox scaffold (unchanged structure)
     return [
       '<div class="gl-gallery"><div class="gl-grid">',
       cardsHtml,
       '</div></div>',
-      // Reusable modal
+      '<!-- Reusable modal -->',
       '<div class="gl-lightbox" id="gl-lightbox" aria-hidden="true">',
-      '<div class="gl-backdrop" data-gl-close></div>',
-      '<div class="gl-modal" role="dialog" aria-modal="true" aria-label="Image viewer">',
-      '<button class="gl-close" type="button" data-gl-close aria-label="Close">&times;</button>',
-      '<button class="gl-arrow gl-prev" type="button" data-gl-prev aria-label="Previous image">&#10094;</button>',
-      '<img id="gl-full" alt="">',
-      '<button class="gl-arrow gl-next" type="button" data-gl-next aria-label="Next image">&#10095;</button>',
-      '</div>',
+      '  <div class="gl-backdrop" data-gl-close></div>',
+      '  <div class="gl-modal" role="dialog" aria-modal="true" aria-label="Image viewer">',
+      '    <button class="gl-close" type="button" data-gl-close aria-label="Close">&times;</button>',
+      '    <button class="gl-arrow gl-prev" type="button" data-gl-prev aria-label="Previous image">&#10094;</button>',
+      '    <img id="gl-full" alt="">',
+      '    <button class="gl-arrow gl-next" type="button" data-gl-next aria-label="Next image">&#10095;</button>',
+      '  </div>',
       '</div>',
     ].join("");
   });

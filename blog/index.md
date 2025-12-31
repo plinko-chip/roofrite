@@ -11,3 +11,4 @@ hero_alt: "A Roof Rite team member uses a heat welder to seam white TPO roofing 
 
 [Low-Slope Roof Maintenance](low_slope_maintenance) &mdash; Why yearly inspections save you money (and headaches!)
 
+[James Hardie Siding Investment](james_hardie_siding_investment) &mdash; Why James Hardie is a smart investment for your home.

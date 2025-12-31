@@ -514,3 +514,63 @@ address {
 }
 @keyframes glspin { to { transform: rotate(360deg); } }
 
+/* prevent browser gestures while zooming in the lightbox */
+.gl-modal.gl-zooming {
+  touch-action: none;           /* allow our pinch/pan */
+  cursor: grab;
+}
+.gl-modal.gl-zooming:active {
+  cursor: grabbing;
+}
+
+/* spinner element is already injected by JS: center it */
+.gl-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.4);  /* subtle veil while loading */
+  z-index: 3;                   /* above image/arrows */
+}
+
+.gl-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: glspin 0.9s linear infinite;
+}
+
+@keyframes glspin { to { transform: rotate(360deg); } }
+
+/* prevent browser gestures while zooming in the lightbox */
+.gl-modal.gl-zooming {
+  touch-action: none;           /* allow our pinch/pan */
+  cursor: grab;
+}
+.gl-modal.gl-zooming:active {
+  cursor: grabbing;
+}
+
+/* spinner element is already injected by JS: center it */
+.gl-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.4);  /* subtle veil while loading */
+  z-index: 3;                   /* above image/arrows */
+}
+
+.gl-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: glspin 0.9s linear infinite;
+}
+
+@keyframes glspin { to { transform: rotate(360deg); } }
+
