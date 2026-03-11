@@ -7,8 +7,14 @@ hero_alt: "A Roof Rite team member uses a heat welder to seam white TPO roofing 
 
 ## Our blog posts
 
+### 2026
+
+[Understanding the Insurance Claim Process for Hail & Wind Damage](understanding_insurance_wind_and_hail) &mdash; New insurance claim? Use this crash course to help navigate!
+
 ### 2025
 
 [Low-Slope Roof Maintenance](low_slope_maintenance) &mdash; Why yearly inspections save you money (and headaches!)
 
 [James Hardie Siding Investment](james_hardie_siding_investment) &mdash; Why James Hardie is a smart investment for your home.
+
+
