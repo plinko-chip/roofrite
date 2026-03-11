@@ -1,6 +1,6 @@
 ---
 layout: page.njk
-title: "New James Hardie Siding"
+title: "Understanding the Insurance Claim Process for Hail & Wind Damage"
 hero_image: "/assets/img/IMG_2553.png"
 hero_alt: "A Roof Rite Truck parked in front of a large house with a new roof."
 ---
