@@ -1,9 +1,3 @@
----
-title: "The 2026 Homeowner’s Guide to Roofing & Exteriors in the Central Plains"
-author: "Roof Rite Exteriors"
-draft: false
----
-
 # The 2026 Homeowner’s Guide to Roofing & Exteriors in the Central Plains
 
 If you don’t like the weather in Nebraska, wait five minutes. For those of us with the good fortune to call this state home, we know that statement is incredibly true, for better or for worse.
