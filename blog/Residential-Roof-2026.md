@@ -1,5 +1,14 @@
 # The 2026 Homeowner’s Guide to Roofing & Exteriors in the Central Plains
+## Table of Contents
+* [1. Understanding Roofing Materials](#understanding-roofing-materials-what-is-my-roof-actually-made-of)
+  * [Quick Quiz: Narrowing Down Your Options](#quick-quiz-narrowing-down-your-options)
+* [2. How to Spot Roof Damage Early](#how-to-spot-roof-damage-early)
+* [3. The Roof Rite Replacement Process](#the-roof-rite-replacement-process)
+* [4. Roofing and Insurance Claims](#roofing-and-insurance-claims)
+* [5. Interior Protection & Restoration](#interior-protection)
+* [6. Next Steps & Free Consultation](#next-steps)
 
+---
 If you don’t like the weather in Nebraska, wait five minutes. For those of us with the good fortune to call this state home, we know that statement is incredibly true, for better or for worse.
 
 From its flash floods in Spring and Summer to the blizzards and shocking cold of its Winter, Nebraska and its changing atmospheric conditions mean we have to stay on our toes all year round. The job is no smaller for our roofing systems. The severity of our weather means that maintaining the exterior of your property, especially your roofing system, is about much more than curb appeal. It’s a vital step in ensuring your home’s structural integrity, long-term comfort, and overall value.
