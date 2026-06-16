@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% include "head.njk" %}
+    <link rel="stylesheet" href="/assets/css/blog.css">
+  </head>
+  <body>
+
+    {% include "header.njk" %}
+    {% include "nav.njk" %}
+
+    <main>
+
+      <!-- Hero -->
+      <div class="blog-hero">
+        <h1>Blog</h1>
+        <p class="blog-subtitle">Tips, updates &amp; insights from the Roof Rite team</p>
+      </div>
+
+      <!-- Search -->
+      <div class="blog-search-wrap">
+        <div class="blog-search-box">
+          <span class="blog-search-icon">&#128269;</span>
+          <input type="text" id="blog-search" placeholder="Search articles…" oninput="filterBlog()">
+        </div>
+      </div>
+
+      <!-- Category filter pills -->
+      <div class="blog-filters">
+        <button class="filter-btn active" onclick="setFilter('all', this)">ALL POSTS</button>
+        <button class="filter-btn" onclick="setFilter('residential', this)">RESIDENTIAL</button>
+        <button class="filter-btn" onclick="setFilter('commercial', this)">COMMERCIAL</button>
+        <button class="filter-btn" onclick="setFilter('insurance', this)">INSURANCE</button>
+        <button class="filter-btn" onclick="setFilter('maintenance', this)">MAINTENANCE</button>
+      </div>
+
+      <!-- Blog card grid — auto-populated from all posts tagged "blogpost" -->
+      <div class="blog-grid" id="blog-grid">
+        {% for post in collections.blogpost | reverse %}
+        <article class="blog-card"
+                 data-category="{{ post.data.category | default('general') }}"
+                 data-title="{{ post.data.title | lower }}">
+          <a href="{{ post.url }}">
+            {% if post.data.hero_image %}
+              <img src="{{ post.data.hero_image }}"
+                   alt="{{ post.data.hero_alt | default(post.data.title) }}"
+                   loading="lazy">
+            {% else %}
+              <div class="blog-card-no-img"></div>
+            {% endif %}
+            <div class="blog-card-body">
+              <span class="blog-date">{{ post.data.display_date }}</span>
+              <h2 class="blog-title">{{ post.data.title }}</h2>
+              {% if post.data.summary %}
+                <p class="blog-summary">{{ post.data.summary }}</p>
+              {% endif %}
+            </div>
+          </a>
+        </article>
+        {% endfor %}
+      </div>
+
+      <p class="blog-no-results" id="blog-no-results" style="display:none;">
+        No articles matched your search.
+      </p>
+
+    </main>
+
+    <link rel="stylesheet" href="{{ '/assets/css/main.css' | fingerprint }}">
+    <script defer src="{{ '/assets/js/gallery.js' | fingerprint }}"></script>
+
+    {% include "footer.njk" %}
+
+    <script>
+      let activeCategory = 'all';
+
+      function setFilter(cat, btn) {
+        activeCategory = cat;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterBlog();
+      }
+
+      function filterBlog() {
+        const query = document.getElementById('blog-search').value.toLowerCase();
+        const cards = document.querySelectorAll('.blog-card');
+        let visible = 0;
+        cards.forEach(card => {
+          const catMatch = activeCategory === 'all' || card.dataset.category === activeCategory;
+          const textMatch = !query || card.dataset.title.includes(query);
+          const show = catMatch && textMatch;
+          card.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        document.getElementById('blog-no-results').style.display = visible === 0 ? '' : 'none';
+      }
+    </script>
+
+  </body>
+</html>

@@ -1,8 +1,12 @@
 ---
 layout: page.njk
-title: "Roof Rite Blog"
+title: "Why Yearly Maintenance on Your Low-Slope Roof is Essential"
 hero_image: "/assets/img/DJI_0027.jpg"
-hero_alt: "A Roof Rite team member uses a heat welder to seam white TPO roofing membrane on a flat roof at sunset. He kneels over the material with a hot-air gun in one hand and a silicone roller in the other, ensuring a secure bond."
+hero_alt: "A Roof Rite team member uses a heat welder to seam white TPO roofing membrane on a flat roof at sunset."
+tags: blogpost
+category: commercial
+display_date: "November 1, 2025"
+summary: "Why yearly inspections on flat and low-slope roofs save you money and headaches — and exactly what to look for."
 ---
 
 # Why Yearly Maintenance on Your Low-Slope Roof is Essential  

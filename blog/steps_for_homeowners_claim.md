@@ -1,8 +1,12 @@
 ---
 layout: page.njk
-title: "Steps for homeowners claim"
+title: "Steps for Filing a Homeowners Insurance Claim"
 hero_image: "/assets/img/IMG_2553.png"
-hero_alt: "Here you should put alt text describing the image"
+hero_alt: "A Roof Rite truck parked in front of a house being inspected after storm damage."
+tags: blogpost
+category: insurance
+display_date: "April 1, 2026"
+summary: "A simple step-by-step walkthrough for filing a homeowners insurance claim after storm damage to your roof."
 ---
 
 ## This is a sample blog post
