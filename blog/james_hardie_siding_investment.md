@@ -1,8 +1,12 @@
 ---
 layout: page.njk
-title: "New James Hardie Siding"
+title: "Why James Hardie Siding is the Smartest Investment for Your Home"
 hero_image: "/assets/img/Siding1.jpg"
 hero_alt: "A new Board and Batten James Hardie Siding Project, installed by Roof Rite."
+tags: blogpost
+category: residential
+display_date: "September 1, 2025"
+summary: "Long-lasting protection, stunning looks, and minimal upkeep — here's why fiber cement siding is the gold standard."
 ---
 # Why James Hardie Siding is the Smartest Investment for Your Home
 

@@ -3,6 +3,10 @@ layout: page.njk
 title: "Understanding the Insurance Claim Process for Hail & Wind Damage"
 hero_image: "/assets/img/IMG_2553.png"
 hero_alt: "A Roof Rite Truck parked in front of a large house with a new roof."
+tags: blogpost
+category: insurance
+display_date: "January 15, 2026"
+summary: "New insurance claim? Use this crash course to navigate the full hail and wind damage process from filing to final payment."
 ---
 # Understanding the Insurance Claim Process for Hail & Wind Damage
 
