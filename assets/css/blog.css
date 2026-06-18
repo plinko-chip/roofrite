@@ -100,6 +100,8 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 28px;
   padding: 0 5vw 80px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 @media (max-width: 900px) {
