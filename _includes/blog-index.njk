@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     {% include "head.njk" %}
+    <link rel="stylesheet" href="{{ '/assets/css/main.css' | fingerprint }}">
     <link rel="stylesheet" href="/assets/css/blog.css">
   </head>
   <body>
@@ -65,7 +66,6 @@
 
     </main>
 
-    <link rel="stylesheet" href="{{ '/assets/css/main.css' | fingerprint }}">
     <script defer src="{{ '/assets/js/gallery.js' | fingerprint }}"></script>
 
     {% include "footer.njk" %}
