@@ -2,18 +2,27 @@
    blog.css — Roof Rite Blog grid styles
    ============================================================ */
 
+:root {
+  --primary-color: #232E5E;
+  --light-bg: #f9f9f9;
+  --border-color: #e8e8e8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666;
+  --text-muted: #999;
+}
+
 /* ---------- Hero ---------- */
 .blog-hero {
   text-align: center;
   padding: 60px 5vw 30px;
-  background: #f9f9f9;
-  border-bottom: 1px solid #e8e8e8;
+  background: var(--light-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .blog-hero h1 {
   font-family: 'Oswald', sans-serif;
   font-size: clamp(2.5rem, 6vw, 4rem);
-  color: #232E5E;
+  color: var(--primary-color);
   margin: 0 0 10px;
   letter-spacing: 1px;
 }
@@ -52,7 +61,6 @@
 
 .blog-search-box input {
   border: none;
-  outline: none;
   font-family: 'Work Sans', sans-serif;
   font-size: 1rem;
   width: 100%;
@@ -60,11 +68,16 @@
   background: transparent;
 }
 
+.blog-search-box input:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 /* ---------- Category filter pills ---------- */
 .blog-filters {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
   padding: 20px 5vw 30px;
 }
@@ -88,10 +101,15 @@
   border-color: #999;
 }
 
+.filter-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 .filter-btn.active {
-  background: #232E5E;
+  background: var(--primary-color);
   color: #fff;
-  border-color: #232E5E;
+  border-color: var(--primary-color);
 }
 
 /* ---------- 3-column grid ---------- */
@@ -116,7 +134,7 @@
 /* ---------- Card ---------- */
 .blog-card {
   background: #fff;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.2s;
@@ -133,18 +151,25 @@
   color: inherit;
 }
 
+.blog-card > a:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
 .blog-card img {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   display: block;
   background: #ddd;
+  height: auto;
 }
 
 .blog-card-no-img {
   width: 100%;
   aspect-ratio: 16 / 9;
   background: linear-gradient(135deg, #22305F 0%, #4A7DBC 100%);
+  height: auto;
 }
 
 .blog-card-body {
@@ -155,7 +180,7 @@
   display: block;
   font-family: 'Work Sans', sans-serif;
   font-size: 0.75rem;
-  color: #999;
+  color: var(--text-muted);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -165,19 +190,19 @@
   font-family: 'Work Sans', sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   line-height: 1.4;
   margin: 0 0 8px;
 }
 
 .blog-card:hover .blog-title {
-  color: #232E5E;
+  color: var(--primary-color);
 }
 
 .blog-summary {
   font-family: 'Work Sans', sans-serif;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
 }
