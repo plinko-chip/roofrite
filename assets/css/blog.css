@@ -102,9 +102,6 @@
   padding: 0 5vw 80px;
   max-width: 1400px;
   margin: 0 auto;
-  width: calc(100% + 10vw);
-  margin-left: -5vw;
-  margin-right: -5vw;
   box-sizing: border-box;
 }
 
