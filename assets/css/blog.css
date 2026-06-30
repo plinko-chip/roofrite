@@ -11,12 +11,28 @@
   --text-muted: #999;
 }
 
+/* ---------- RESET MAIN CONTAINER FOR THE BLOG PAGE ----------
+   This completely neutralizes any flex rows, grids, or side-by-side
+   layouts coming from main.css and forces a clean vertical stack.
+   ------------------------------------------------------------ */
+main {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
 /* ---------- Hero banner ---------- */
 .blog-hero {
   text-align: center;
   padding: 60px 5vw 30px;
   background: #f9f9f9;
   border-bottom: 1px solid #e8e8e8;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .blog-hero h1 {
@@ -39,6 +55,8 @@
   display: flex;
   justify-content: center;
   padding: 30px 5vw 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .blog-search-box {
@@ -76,6 +94,8 @@
   justify-content: center;
   gap: 8px;
   padding: 20px 5vw 30px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .filter-btn {
@@ -103,6 +123,102 @@
   border-color: #232E5E;
 }
 
-/* ---------- Override main.css constraints for blog page ----------
-   FIXED: Added flex-basis and block layout configurations. This stops 
-   elements from placing themselves side-by-side
+/* ---------- Override main.css inner div constraints ---------- */
+.blog-hero,
+.blog-search-wrap,
+.blog-filters,
+.blog-grid,
+.blog-no-results {
+  max-width: none !important;   /* override main > div { max-width: 600px } */
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+
+/* ---------- 3-column card grid ---------- */
+.blog-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 28px;
+  padding: 0 5vw 80px;
+  width: 100%;
+  max-width: 1400px !important; 
+}
+
+/* 2 columns on medium screens */
+@media (max-width: 900px) {
+  .blog-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* 1 column on mobile */
+@media (max-width: 580px) {
+  .blog-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ---------- Individual card ---------- */
+.blog-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.blog-card:hover {
+  box-shadow: 0 4px 18px rgba(0,0,0,0.11);
+  transform: translateY(-2px);
+}
+
+.blog-card > a {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+}
+
+.blog-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  background: #ddd;
+}
+
+/* Card body (date + title) */
+.blog-card-body {
+  padding: 16px 18px 20px;
+}
+
+.blog-date {
+  display: block;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 0.78rem;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.blog-title {
+  font-family: 'Work Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.blog-card:hover .blog-title {
+  color: #232E5E;
+}
+
+/* ---------- No-results message ---------- */
+.blog-no-results {
+  text-align: center;
+  color: #888;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 1rem;
+  padding: 40px 0 80px;
+}
