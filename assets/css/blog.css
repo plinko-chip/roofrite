@@ -11,18 +11,18 @@
   --text-muted: #999;
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero banner ---------- */
 .blog-hero {
   text-align: center;
   padding: 60px 5vw 30px;
-  background: var(--light-bg);
-  border-bottom: 1px solid var(--border-color);
+  background: #f9f9f9;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .blog-hero h1 {
   font-family: 'Oswald', sans-serif;
   font-size: clamp(2.5rem, 6vw, 4rem);
-  color: var(--primary-color);
+  color: #232E5E;
   margin: 0 0 10px;
   letter-spacing: 1px;
 }
@@ -34,7 +34,7 @@
   margin: 0;
 }
 
-/* ---------- Search ---------- */
+/* ---------- Search bar ---------- */
 .blog-search-wrap {
   display: flex;
   justify-content: center;
@@ -61,16 +61,12 @@
 
 .blog-search-box input {
   border: none;
+  outline: none;
   font-family: 'Work Sans', sans-serif;
   font-size: 1rem;
   width: 100%;
   padding: 0;
   background: transparent;
-}
-
-.blog-search-box input:focus {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
 }
 
 /* ---------- Category filter pills ---------- */
@@ -87,7 +83,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  padding: 8px 18px;
+  padding: 8px 16px;
   border: 1px solid #ccc;
   border-radius: 3px;
   background: #fff;
@@ -101,117 +97,12 @@
   border-color: #999;
 }
 
-.filter-btn:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
 .filter-btn.active {
-  background: var(--primary-color);
+  background: #232E5E;
   color: #fff;
-  border-color: var(--primary-color);
+  border-color: #232E5E;
 }
 
-/* ---------- 3-column grid ---------- */
-.blog-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-  padding: 0 5vw 80px;
-  max-width: 1400px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-@media (max-width: 900px) {
-  .blog-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 580px) {
-  .blog-grid { grid-template-columns: 1fr; }
-}
-
-/* ---------- Card ---------- */
-.blog-card {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  overflow: hidden;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-
-.blog-card:hover {
-  box-shadow: 0 4px 18px rgba(0,0,0,0.11);
-  transform: translateY(-2px);
-}
-
-.blog-card > a {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-
-.blog-card > a:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: -2px;
-}
-
-.blog-card img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  display: block;
-  background: #ddd;
-  height: auto;
-}
-
-.blog-card-no-img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: linear-gradient(135deg, #22305F 0%, #4A7DBC 100%);
-  height: auto;
-}
-
-.blog-card-body {
-  padding: 16px 18px 22px;
-}
-
-.blog-date {
-  display: block;
-  font-family: 'Work Sans', sans-serif;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.blog-title {
-  font-family: 'Work Sans', sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.4;
-  margin: 0 0 8px;
-}
-
-.blog-card:hover .blog-title {
-  color: var(--primary-color);
-}
-
-.blog-summary {
-  font-family: 'Work Sans', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* ---------- No results ---------- */
-.blog-no-results {
-  text-align: center;
-  color: #888;
-  font-family: 'Work Sans', sans-serif;
-  font-size: 1rem;
-  padding: 40px 0 80px;
-}
+/* ---------- Override main.css constraints for blog page ----------
+   FIXED: Added flex-basis and block layout configurations. This stops 
+   elements from placing themselves side-by-side
