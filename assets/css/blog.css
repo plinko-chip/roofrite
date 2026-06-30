@@ -11,18 +11,18 @@
   --text-muted: #999;
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero banner ---------- */
 .blog-hero {
   text-align: center;
   padding: 60px 5vw 30px;
-  background: var(--light-bg);
-  border-bottom: 1px solid var(--border-color);
+  background: #f9f9f9;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .blog-hero h1 {
   font-family: 'Oswald', sans-serif;
   font-size: clamp(2.5rem, 6vw, 4rem);
-  color: var(--primary-color);
+  color: #232E5E;
   margin: 0 0 10px;
   letter-spacing: 1px;
 }
@@ -34,7 +34,7 @@
   margin: 0;
 }
 
-/* ---------- Search ---------- */
+/* ---------- Search bar ---------- */
 .blog-search-wrap {
   display: flex;
   justify-content: center;
@@ -61,16 +61,12 @@
 
 .blog-search-box input {
   border: none;
+  outline: none;
   font-family: 'Work Sans', sans-serif;
   font-size: 1rem;
   width: 100%;
   padding: 0;
   background: transparent;
-}
-
-.blog-search-box input:focus {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
 }
 
 /* ---------- Category filter pills ---------- */
@@ -87,7 +83,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  padding: 8px 18px;
+  padding: 8px 16px;
   border: 1px solid #ccc;
   border-radius: 3px;
   background: #fff;
@@ -101,40 +97,60 @@
   border-color: #999;
 }
 
-.filter-btn:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
 .filter-btn.active {
-  background: var(--primary-color);
+  background: #232E5E;
   color: #fff;
-  border-color: var(--primary-color);
+  border-color: #232E5E;
 }
 
-/* ---------- 3-column grid ---------- */
+/* ---------- Override main.css constraints for blog page ----------
+   main.css sets three things that break the blog on desktop:
+     1. main { align-items: center }   — centers & constrains child width
+     2. main > div { max-width: 600px } — caps every div at 600px
+     3. main > div { margin-left: 5vw; margin-right: 5vw } — shifts content right
+   These rules undo all three for blog elements only.
+   ------------------------------------------------------------------ */
+.blog-hero,
+.blog-search-wrap,
+.blog-filters,
+.blog-grid,
+.blog-no-results {
+  width: 100%;
+  max-width: none !important;   /* override main > div { max-width: 600px } */
+  align-self: stretch;          /* override main { align-items: center }    */
+  margin-left: 0 !important;   /* override main > div { margin-left: 5vw } */
+  margin-right: 0 !important;  /* override main > div { margin-right: 5vw } */
+  box-sizing: border-box;
+}
+
+/* ---------- 3-column card grid ---------- */
 .blog-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 28px;
   padding: 0 5vw 80px;
-  max-width: 1400px;
+  max-width: 1400px !important;
   margin: 0 auto;
-  box-sizing: border-box;
 }
 
+/* 2 columns on medium screens */
 @media (max-width: 900px) {
-  .blog-grid { grid-template-columns: repeat(2, 1fr); }
+  .blog-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
+/* 1 column on mobile */
 @media (max-width: 580px) {
-  .blog-grid { grid-template-columns: 1fr; }
+  .blog-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* ---------- Card ---------- */
+/* ---------- Individual card ---------- */
 .blog-card {
   background: #fff;
-  border: 1px solid var(--border-color);
+  border: 1px solid #e8e8e8;
   border-radius: 4px;
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.2s;
@@ -145,69 +161,50 @@
   transform: translateY(-2px);
 }
 
+/* The whole card is one big link */
 .blog-card > a {
   display: block;
   text-decoration: none;
   color: inherit;
+  height: 100%;
 }
 
-.blog-card > a:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: -2px;
-}
-
+/* Card image */
 .blog-card img {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 9;   /* keeps all images the same height */
   object-fit: cover;
   display: block;
-  background: #ddd;
-  height: auto;
+  background: #ddd;        /* grey placeholder if image is missing */
 }
 
-.blog-card-no-img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: linear-gradient(135deg, #22305F 0%, #4A7DBC 100%);
-  height: auto;
-}
-
+/* Card body (date + title) */
 .blog-card-body {
-  padding: 16px 18px 22px;
+  padding: 16px 18px 20px;
 }
 
 .blog-date {
   display: block;
   font-family: 'Work Sans', sans-serif;
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.78rem;
+  color: #888;
   margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .blog-title {
   font-family: 'Work Sans', sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #1a1a1a;
   line-height: 1.4;
-  margin: 0 0 8px;
-}
-
-.blog-card:hover .blog-title {
-  color: var(--primary-color);
-}
-
-.blog-summary {
-  font-family: 'Work Sans', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
   margin: 0;
 }
 
-/* ---------- No results ---------- */
+.blog-card:hover .blog-title {
+  color: #232E5E;
+}
+
+/* ---------- No-results message ---------- */
 .blog-no-results {
   text-align: center;
   color: #888;
